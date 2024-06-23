@@ -16,6 +16,10 @@ import properscoring as ps
 from collections import Counter
 np.random.seed(0)
 
+# =============================================================================
+# Functions 
+# =============================================================================
+
 def draw_samples(df, number,siz):
     results = []
     for col in df.columns:
@@ -93,15 +97,17 @@ def cal_res(df_true,df_pred):
     results_df = results_df.fillna(0)
     return results_df.mean()
 
+# =============================================================================
+# Data Import
+# =============================================================================
 
 df_country = pd.read_csv('Data/country_list.csv',index_col=0)
 df_month = pd.read_csv('Data/month_ids.csv',index_col=0)
 df_input = pd.read_parquet('Data/cm_features.parquet')
 df_tot_m_tot = df_input.pivot(index='month_id', columns='country_id', values='ged_sb')
 
-
 # =============================================================================
-# Test
+# Forecast Creation
 # =============================================================================
 
 res_sce=pd.DataFrame()
@@ -161,6 +167,20 @@ for coun in range(len(df_tot_m.columns)):
         pred_tot_b = pd.concat([pred_tot_b,df_zer])
 dict_res['2024']=pred_tot_b
 
+# =============================================================================
+# Output creation
+# =============================================================================
+
+mont_lim=[457,469,481,493,505,517,535]
+for counter,annee in enumerate(['2018','2019','2020','2021','2022','2023','2024']):
+    df_out = dict_res[annee]
+    df_out = df_out[df_out['month_id']>=mont_lim[counter]]
+    df_out.to_parquet(f'Preds/window=Y{annee}/SF_{annee}.parquet')
+
+# =============================================================================
+# Comparison with Conflictology_12m
+# =============================================================================
+
 res_bench=pd.DataFrame()
 for counter,annee in enumerate(['2018','2019','2020','2021','2022','2023']):
     bench = pd.read_parquet('Data/bm_'+annee+'.parquet')
@@ -201,5 +221,3 @@ for i, metric in enumerate(index):
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.show()
 
-#res_sce.to_csv('wind10_min0_75_10min.csv')
-#res_sce_old = res_sce.copy()
